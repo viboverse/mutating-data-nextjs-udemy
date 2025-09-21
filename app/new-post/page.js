@@ -1,14 +1,43 @@
+import FormSubmit from "@/components/form-submit";
+import { uploadImage } from "@/lib/cloudinary";
+import { storePost } from "@/lib/posts";
+import { redirect } from "next/navigation";
+
 export default function NewPostPage() {
+  async function createPost(formData) {
+    "use server";
+    // const enteredPost = Object.fromEntries(formData.entries());
+    const title = formData.get("title");
+    const image = formData.get("image");
+    const content = formData.get("content");
+
+    let imageUrl;
+
+    try {
+      imageUrl = await uploadImage(image);
+    } catch (error) {
+      throw new Error("Image upload failed!");
+    }
+
+    await storePost({
+      imageUrl: imageUrl,
+      title,
+      content,
+      userId: 1,
+    });
+
+    redirect("/feed");
+  }
   return (
     <>
       <h1>Create a new post</h1>
-      <form>
+      <form action={createPost}>
         <p className="form-control">
           <label htmlFor="title">Title</label>
           <input type="text" id="title" name="title" />
         </p>
         <p className="form-control">
-          <label htmlFor="image">Image URL</label>
+          <label htmlFor="image">Image</label>
           <input
             type="file"
             accept="image/png, image/jpeg"
@@ -21,8 +50,7 @@ export default function NewPostPage() {
           <textarea id="content" name="content" rows="5" />
         </p>
         <p className="form-actions">
-          <button type="reset">Reset</button>
-          <button>Create Post</button>
+          <FormSubmit />
         </p>
       </form>
     </>
